@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hallitukset Verkkosivu</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: flex-start; 
+        }
+
+        #layout-container {
+            display: flex;
+            width: 90%; 
+            max-width: 1200px;
+            margin-top: 50px;
+            margin-bottom: 100px;
+            margin-left: 5vw; 
+            position: relative;
+        }
+
+        /* 1. Timeline Ruler */
+        #timeline-ruler {
+            width: 100px; 
+            position: relative;
+            border-right: 2px solid #555555;
+            flex-shrink: 0; 
+        }
+
+        /* The blue light effect */
+        #timeline-highlight {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 82, 155, 0.25); /* Subtle blue glow */
+            border-left: 3px solid #00529b; /* Sharp blue edge */
+            pointer-events: none; /* Allows clicks to pass through */
+            transition: top 0.3s ease, height 0.3s ease;
+            z-index: 1; /* Sits behind the ticks */
+        }
+
+        .tick { position: absolute; right: 0; background-color: #888888; z-index: 2; }
+        .tick-day { width: 4px; height: 1px; background-color: #333333; }
+        .tick-month { width: 10px; height: 2px; background-color: #aaaaaa; }
+        .tick-year { width: 26px; height: 2px; background-color: #ffffff; }
+
+        .year-label {
+            position: absolute;
+            right: 40px; 
+            transform: translateY(-50%);
+            font-weight: bold;
+            font-size: 0.85rem; 
+            color: #ffffff;
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+
+        /* 2. Cabinets Area */
+        #cabinets-area {
+            width: 250px;
+            position: relative;
+            margin-left: 25px; 
+            flex-shrink: 0;
+        }
+
+        .cabinet-block {
+            position: absolute;
+            left: 0;
+            right: 0; 
+            background: linear-gradient(145deg, #1c1c1c, #111111);
+            border: 1px solid #333333;
+            border-left: 4px solid #00529b; 
+            border-radius: 5px; 
+            padding: 8px 12px; 
+            box-sizing: border-box;
+            overflow: hidden; 
+            box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cabinet-block.active {
+            border-left: 4px solid #ffffff;
+            background: linear-gradient(145deg, #00529b, #003a70);
+        }
+
+        .cabinet-block h3 { margin: 0 0 3px 0; font-size: 0.9rem; color: #ffffff; }
+        .cabinet-block p { margin: 2px 0; font-size: 0.75rem; color: #bbbbbb; }
+
+        /* 3. Infobox */
+        #infobox-container {
+            flex-grow: 1;
+            margin-left: 40px;
+        }
+
+        #infobox {
+            position: sticky;
+            top: 50px;
+            background-color: #111111;
+            border: 1px solid #333333;
+            border-top: 5px solid #00529b;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        #infobox h2 { margin-top: 0; font-size: 1.8rem; color: #ffffff; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        #infobox p { font-size: 1.1rem; line-height: 1.6; color: #cccccc; }
+        .infobox-label { color: #888888; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; display: block; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="layout-container">
+        <div id="timeline-ruler">
+            <div id="timeline-highlight"></div>
+        </div>
+        
+        <div id="cabinets-area"></div>
+        
+        <div id="infobox-container">
+            <div id="infobox"></div>
+        </div>
+    </div>
+
+    <script>
+        const startDate = new Date(1917, 10, 27); 
+        const endDate = new Date(2026, 0, 1);     
+        const pixelsPerDay = 1.33; 
+
+        const governments = [
+            { id: 1, name: "Svinhufvud I", start: "1917-11-27", end: "1918-05-27", pmParty: "Nuorsuomalainen puolue", type: "Enemmistöhallitus", details: "Itsenäisen Suomen ensimmäinen hallitus (senaatti)." },
+            { id: 2, name: "Paasikivi I", start: "1918-05-27", end: "1918-11-27", pmParty: "Suomalainen puolue", type: "Enemmistöhallitus", details: "Toimi Suomen sisällissodan päättymisen jälkeisissä oloissa." },
+            { id: 3, name: "Ingman I", start: "1918-11-27", end: "1919-04-17", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Ensimmäinen varsinainen valtioneuvosto hallintomuodon vahvistamisen jälkeen." },
+            { id: 4, name: "K. Castrén", start: "1919-04-17", end: "1919-08-15", pmParty: "Kansallinen Edistyspuolue", type: "Vähemmistöhallitus", details: "Lyhytikäinen vähemmistöhallitus siirtymäkaudella." },
+            { id: 5, name: "Vennola I", start: "1919-08-15", end: "1920-03-15", pmParty: "Kansallinen Edistyspuolue", type: "Vähemmistöhallitus", details: "Keskustapohjainen vähemmistöhallitus." },
+            { id: 6, name: "Erich", start: "1920-03-15", end: "1921-04-09", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Solmi Tarton rauhan Neuvosto-Venäjän kanssa vuonna 1920." }
+        ];
+
+        function parseDate(dateStr) { const parts = dateStr.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]); }
+        function getDaysBetween(d1, d2) { const msPerDay = 1000 * 60 * 60 * 24; return Math.round((d2 - d1) / msPerDay); }
+
+        // Logic to update the highlight position
+        function updateHighlight(top, height) {
+            const highlight = document.getElementById('timeline-highlight');
+            highlight.style.top = `${top}px`;
+            highlight.style.height = `${height}px`;
+        }
+
+        function updateInfoBox(gov) {
+            const infobox = document.getElementById('infobox');
+            const govStartDate = parseDate(gov.start);
+            const govEndDate = parseDate(gov.end);
+            const durationInDays = getDaysBetween(govStartDate, govEndDate);
+            
+            infobox.innerHTML = `
+                <h2>${gov.id}. ${gov.name}</h2>
+                <span class="infobox-label">Kesto</span>
+                <p>${gov.start} – ${gov.end} <strong>(${durationInDays} päivää)</strong></p>
+                <span class="infobox-label">Pääministerin Puolue</span>
+                <p>${gov.pmParty}</p>
+                <span class="infobox-label">Hallituksen Tyyppi</span>
+                <p>${gov.type}</p>
+                <span class="infobox-label">Lisätiedot</span>
+                <p>${gov.details}</p>
+            `;
+        }
+
+        // Setup Ruler
+        const ruler = document.getElementById('timeline-ruler');
+        const rulerFragment = document.createDocumentFragment();
+        let currentDate = new Date(startDate);
+        let currentYPosition = 0;
+
+        while (currentDate <= endDate) {
+            const isFirstDayOfYear = currentDate.getDate() === 1 && currentDate.getMonth() === 0;
+            const isFirstDayOfMonth = currentDate.getDate() === 1 && !isFirstDayOfYear;
+            const tick = document.createElement('div');
+            tick.classList.add('tick');
+            tick.style.top = `${currentYPosition}px`;
+            if (isFirstDayOfYear) {
+                tick.classList.add('tick-year');
+                const label = document.createElement('div');
+                label.classList.add('year-label');
+                label.style.top = `${currentYPosition}px`;
+                label.textContent = currentDate.getFullYear();
+                rulerFragment.appendChild(label);
+            } else if (isFirstDayOfMonth) { tick.classList.add('tick-month'); }
+            else { tick.classList.add('tick-day'); }
+            rulerFragment.appendChild(tick);
+            currentDate.setDate(currentDate.getDate() + 1);
+            currentYPosition += pixelsPerDay;
+        }
+        ruler.style.height = `${currentYPosition}px`;
+        ruler.appendChild(rulerFragment);
+
+        // Setup Cabinets
+        const cabinetsArea = document.getElementById('cabinets-area');
+        const cabinetsFragment = document.createDocumentFragment();
+        const cabinetElements = []; 
+
+        governments.forEach((gov) => {
+            const govStartDate = parseDate(gov.start);
+            const govEndDate = parseDate(gov.end);
+            const daysFromStart = getDaysBetween(startDate, govStartDate);
+            const durationInDays = getDaysBetween(govStartDate, govEndDate);
+            const topPosition = daysFromStart * pixelsPerDay;
+            const blockHeight = (durationInDays * pixelsPerDay) - 2;
+
+            const block = document.createElement('div');
+            block.classList.add('cabinet-block');
+            block.style.top = `${topPosition}px`;
+            block.style.height = `${Math.max(blockHeight, 8)}px`;
+            block.innerHTML = `<h3>${gov.id}. ${gov.name}</h3><p>${gov.start} – ${gov.end}</p>`;
+
+            block.addEventListener('click', () => {
+                cabinetElements.forEach(el => el.classList.remove('active'));
+                block.classList.add('active');
+                updateInfoBox(gov);
+                updateHighlight(topPosition, Math.max(blockHeight, 8));
+            });
+
+            cabinetElements.push(block);
+            cabinetsFragment.appendChild(block);
+        });
+
+        cabinetsArea.style.height = `${currentYPosition}px`;
+        cabinetsArea.appendChild(cabinetsFragment);
+
+        // Initialize First
+        if (cabinetElements.length > 0) {
+            cabinetElements[0].classList.add('active');
+            updateInfoBox(governments[0]);
+            
+            // Initial highlight for the first government
+            const initStart = getDaysBetween(startDate, parseDate(governments[0].start));
+            const initDuration = getDaysBetween(parseDate(governments[0].start), parseDate(governments[0].end));
+            updateHighlight(initStart * pixelsPerDay, (initDuration * pixelsPerDay) - 2);
+        }
+    </script>
+</body>
+</html>
