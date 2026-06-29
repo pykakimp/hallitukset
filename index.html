@@ -63,7 +63,6 @@
             background: linear-gradient(to right, transparent, rgba(0, 82, 155, 0.3));
             border-left: 3px solid #00529b; 
             pointer-events: none; 
-            /* INSTANT SCROLL SELECTION: Removed 'transition: top, height' properties */
             z-index: 1; 
         }
 
@@ -103,7 +102,7 @@
             box-sizing: border-box;
             overflow: hidden; 
             cursor: pointer;
-            /* INSTANT SCROLL SELECTION: Removed background and border transitions */
+            transition: right 0.15s ease-out, background 0.15s ease-out; /* Smooth pop-out transition */
         }
 
         .cabinet-block:hover {
@@ -115,10 +114,21 @@
             background: linear-gradient(145deg, #00529b, #003a70);
             box-shadow: 0 4px 15px rgba(0,0,0,0.8);
             z-index: 5;
+            right: -30px; /* Makes the box protrude 30px to the right */
         }
 
-        .cabinet-block h3 { margin: 0 0 3px 0; font-size: 0.9rem; color: #ffffff; }
-        .cabinet-block p { margin: 2px 0; font-size: 0.75rem; color: #bbbbbb; }
+        .cabinet-block h3 { margin: 0 0 3px 0; font-size: 0.9rem; color: #ffffff; transition: font-size 0.15s; }
+        .cabinet-block p { margin: 2px 0; font-size: 0.75rem; color: #bbbbbb; transition: font-size 0.15s, color 0.15s; }
+
+        /* Enlarge fonts when active */
+        .cabinet-block.active h3 {
+            font-size: 1.2rem;
+        }
+        
+        .cabinet-block.active p {
+            font-size: 0.9rem;
+            color: #ffffff; /* Brighten the date text when active */
+        }
 
         /* 3. Infobox */
         #infobox-container {
@@ -144,7 +154,7 @@
 </head>
 <body>
 
-    <div id="selection-line"></div>
+
 
     <div id="layout-container">
         <div id="timeline-ruler">
@@ -252,7 +262,7 @@
                 const layoutMarginTop = 50; 
                 window.scrollTo({
                     top: topPosition + layoutMarginTop - selectionOffset,
-                    behavior: 'auto' /* Snaps immediately on click navigation too */
+                    behavior: 'auto' 
                 });
             });
 
