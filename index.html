@@ -33,16 +33,17 @@
             flex-shrink: 0; 
         }
 
-        /* The blue light effect */
+        /* Updated Highlight: Added linear-gradient for the fade effect */
         #timeline-highlight {
             position: absolute;
             left: 0;
             width: 100%;
-            background-color: rgba(0, 82, 155, 0.25); /* Subtle blue glow */
-            border-left: 3px solid #00529b; /* Sharp blue edge */
-            pointer-events: none; /* Allows clicks to pass through */
+            /* Fades from transparent on the left to blue on the right */
+            background: linear-gradient(to right, transparent, rgba(0, 82, 155, 0.3));
+
+            pointer-events: none; 
             transition: top 0.3s ease, height 0.3s ease;
-            z-index: 1; /* Sits behind the ticks */
+            z-index: 1; 
         }
 
         .tick { position: absolute; right: 0; background-color: #888888; z-index: 2; }
@@ -146,7 +147,6 @@
         function parseDate(dateStr) { const parts = dateStr.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]); }
         function getDaysBetween(d1, d2) { const msPerDay = 1000 * 60 * 60 * 24; return Math.round((d2 - d1) / msPerDay); }
 
-        // Logic to update the highlight position
         function updateHighlight(top, height) {
             const highlight = document.getElementById('timeline-highlight');
             highlight.style.top = `${top}px`;
@@ -172,7 +172,6 @@
             `;
         }
 
-        // Setup Ruler
         const ruler = document.getElementById('timeline-ruler');
         const rulerFragment = document.createDocumentFragment();
         let currentDate = new Date(startDate);
@@ -200,7 +199,6 @@
         ruler.style.height = `${currentYPosition}px`;
         ruler.appendChild(rulerFragment);
 
-        // Setup Cabinets
         const cabinetsArea = document.getElementById('cabinets-area');
         const cabinetsFragment = document.createDocumentFragment();
         const cabinetElements = []; 
@@ -233,12 +231,10 @@
         cabinetsArea.style.height = `${currentYPosition}px`;
         cabinetsArea.appendChild(cabinetsFragment);
 
-        // Initialize First
         if (cabinetElements.length > 0) {
             cabinetElements[0].classList.add('active');
             updateInfoBox(governments[0]);
             
-            // Initial highlight for the first government
             const initStart = getDaysBetween(startDate, parseDate(governments[0].start));
             const initDuration = getDaysBetween(parseDate(governments[0].start), parseDate(governments[0].end));
             updateHighlight(initStart * pixelsPerDay, (initDuration * pixelsPerDay) - 2);
