@@ -20,9 +20,32 @@
             width: 90%; 
             max-width: 1200px;
             margin-top: 50px;
-            margin-bottom: 100px;
+            margin-bottom: 100vh; /* Extra margin to scroll past the last item */
             margin-left: 5vw; 
             position: relative;
+        }
+
+        /* Fixed "Scanner" Focal Line */
+        #selection-line {
+            position: fixed;
+            top: 200px; /* The selection height line */
+            left: 5vw;
+            width: 375px; 
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-top: 1px dashed rgba(255, 255, 255, 0.4);
+            z-index: 10;
+            pointer-events: none; 
+        }
+
+        #selection-line::before {
+            content: "▶ VALITTU AIKA";
+            position: absolute;
+            right: -120px;
+            top: -8px;
+            font-size: 0.7rem;
+            color: #888;
+            letter-spacing: 1px;
         }
 
         /* 1. Timeline Ruler */
@@ -33,16 +56,14 @@
             flex-shrink: 0; 
         }
 
-        /* Updated Highlight: Added linear-gradient for the fade effect */
         #timeline-highlight {
             position: absolute;
             left: 0;
             width: 100%;
-            /* Fades from transparent on the left to blue on the right */
             background: linear-gradient(to right, transparent, rgba(0, 82, 155, 0.3));
-
+            border-left: 3px solid #00529b; 
             pointer-events: none; 
-            transition: top 0.3s ease, height 0.3s ease;
+            /* INSTANT SCROLL SELECTION: Removed 'transition: top, height' properties */
             z-index: 1; 
         }
 
@@ -76,19 +97,24 @@
             right: 0; 
             background: linear-gradient(145deg, #1c1c1c, #111111);
             border: 1px solid #333333;
-            border-left: 4px solid #00529b; 
+            border-left: 4px solid #333333; 
             border-radius: 5px; 
             padding: 8px 12px; 
             box-sizing: border-box;
             overflow: hidden; 
-            box-shadow: 0 3px 8px rgba(0,0,0,0.5);
             cursor: pointer;
-            transition: all 0.2s ease;
+            /* INSTANT SCROLL SELECTION: Removed background and border transitions */
+        }
+
+        .cabinet-block:hover {
+            border-left-color: #00529b;
         }
 
         .cabinet-block.active {
             border-left: 4px solid #ffffff;
             background: linear-gradient(145deg, #00529b, #003a70);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            z-index: 5;
         }
 
         .cabinet-block h3 { margin: 0 0 3px 0; font-size: 0.9rem; color: #ffffff; }
@@ -97,7 +123,7 @@
         /* 3. Infobox */
         #infobox-container {
             flex-grow: 1;
-            margin-left: 40px;
+            margin-left: 140px; 
         }
 
         #infobox {
@@ -118,6 +144,8 @@
 </head>
 <body>
 
+    <div id="selection-line"></div>
+
     <div id="layout-container">
         <div id="timeline-ruler">
             <div id="timeline-highlight"></div>
@@ -134,6 +162,7 @@
         const startDate = new Date(1917, 10, 27); 
         const endDate = new Date(2026, 0, 1);     
         const pixelsPerDay = 1.33; 
+        const selectionOffset = 200; 
 
         const governments = [
             { id: 1, name: "Svinhufvud I", start: "1917-11-27", end: "1918-05-27", pmParty: "Nuorsuomalainen puolue", type: "Enemmistöhallitus", details: "Itsenäisen Suomen ensimmäinen hallitus (senaatti)." },
@@ -172,6 +201,7 @@
             `;
         }
 
+        // Setup Timeline
         const ruler = document.getElementById('timeline-ruler');
         const rulerFragment = document.createDocumentFragment();
         let currentDate = new Date(startDate);
@@ -199,6 +229,7 @@
         ruler.style.height = `${currentYPosition}px`;
         ruler.appendChild(rulerFragment);
 
+        // Setup Cabinets
         const cabinetsArea = document.getElementById('cabinets-area');
         const cabinetsFragment = document.createDocumentFragment();
         const cabinetElements = []; 
@@ -215,13 +246,14 @@
             block.classList.add('cabinet-block');
             block.style.top = `${topPosition}px`;
             block.style.height = `${Math.max(blockHeight, 8)}px`;
-            block.innerHTML = `<h3>${gov.id}. ${gov.name}</h3><p>${gov.start} – ${gov.end}</p>`;
+            block.innerHTML = `<h3>${gov.id}. ${gov.name}</h3><p>${gov.start}</p>`;
 
             block.addEventListener('click', () => {
-                cabinetElements.forEach(el => el.classList.remove('active'));
-                block.classList.add('active');
-                updateInfoBox(gov);
-                updateHighlight(topPosition, Math.max(blockHeight, 8));
+                const layoutMarginTop = 50; 
+                window.scrollTo({
+                    top: topPosition + layoutMarginTop - selectionOffset,
+                    behavior: 'auto' /* Snaps immediately on click navigation too */
+                });
             });
 
             cabinetElements.push(block);
@@ -231,14 +263,54 @@
         cabinetsArea.style.height = `${currentYPosition}px`;
         cabinetsArea.appendChild(cabinetsFragment);
 
-        if (cabinetElements.length > 0) {
-            cabinetElements[0].classList.add('active');
-            updateInfoBox(governments[0]);
-            
-            const initStart = getDaysBetween(startDate, parseDate(governments[0].start));
-            const initDuration = getDaysBetween(parseDate(governments[0].start), parseDate(governments[0].end));
-            updateHighlight(initStart * pixelsPerDay, (initDuration * pixelsPerDay) - 2);
+        // Scroll Scanner Engine
+        let currentActiveBlock = null;
+
+        function checkScrollSelection() {
+            const layoutMarginTop = 50; 
+            const timelineY = window.scrollY + selectionOffset - layoutMarginTop;
+
+            let foundGov = null;
+            let foundBlock = null;
+
+            for (let i = 0; i < governments.length; i++) {
+                const block = cabinetElements[i];
+                const top = parseInt(block.style.top);
+                const height = parseInt(block.style.height);
+
+                if (timelineY >= top && timelineY <= top + height) {
+                    foundGov = governments[i];
+                    foundBlock = block;
+                    break;
+                }
+            }
+
+            if (!foundGov) {
+                if (timelineY < parseInt(cabinetElements[0].style.top)) {
+                    foundGov = governments[0];
+                    foundBlock = cabinetElements[0];
+                } else {
+                    foundGov = governments[governments.length - 1];
+                    foundBlock = cabinetElements[cabinetElements.length - 1];
+                }
+            }
+
+            if (currentActiveBlock !== foundBlock) {
+                if (currentActiveBlock) currentActiveBlock.classList.remove('active');
+                
+                foundBlock.classList.add('active');
+                updateInfoBox(foundGov);
+                
+                const topPosition = parseInt(foundBlock.style.top);
+                const blockHeight = parseInt(foundBlock.style.height);
+                updateHighlight(topPosition, Math.max(blockHeight, 8));
+                
+                currentActiveBlock = foundBlock;
+            }
         }
+
+        window.addEventListener('scroll', checkScrollSelection);
+        checkScrollSelection(); // Initialize layout on entry
     </script>
 </body>
 </html>
