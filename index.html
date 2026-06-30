@@ -8,7 +8,6 @@
         body {
             background-color: #000000;
             color: #ffffff;
-            /* MUUTOS: Vaihdettu Times New Roman pääfontiksi */
             font-family: 'Times New Roman', Times, Baskerville, Georgia, serif;
             margin: 0;
             padding: 0;
@@ -114,7 +113,7 @@
         #layout-container {
             display: flex;
             width: 90%; 
-            max-width: 1200px;
+            max-width: 1500px;
             margin-top: 30px; 
             margin-bottom: 100vh; 
             margin-left: 5vw; 
@@ -169,8 +168,8 @@
             right: 40px; 
             transform: translateY(-50%);
             font-weight: bold;
-            font-size: 1rem; 
-            color: #ffffff;
+            font-size: 1.4rem; 
+            color: #888888; 
             letter-spacing: 1px;
             z-index: 2;
         }
@@ -179,8 +178,8 @@
             position: absolute;
             right: 20px; 
             transform: translateY(-50%);
-            font-size: 0.75rem; 
-            color: #888888;     
+            font-size: 1.1rem; 
+            color: #ffffff;     
             z-index: 4;
         }
 
@@ -257,13 +256,13 @@
             border: 1px solid #333333;
             border-top: 5px solid #00529b;
             border-radius: 8px;
-            padding: 30px;
+            padding: 40px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
-        #infobox h2 { margin-top: 0; font-size: 2rem; color: #ffffff; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        #infobox p { font-size: 1.2rem; line-height: 1.6; color: #cccccc; }
-        .infobox-label { color: #888888; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; display: block; margin-top: 15px; letter-spacing: 1px; }
+        #infobox h2 { margin-top: 0; font-size: 2.5rem; color: #ffffff; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        #infobox p { font-size: 1.4rem; line-height: 1.6; color: #cccccc; }
+        .infobox-label { color: #888888; font-weight: bold; text-transform: uppercase; font-size: 1.1rem; display: block; margin-top: 15px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -293,7 +292,6 @@
         </div>
     </div>
     
-    <div id="selection-line"></div>
 
     <script>
         const startDate = new Date(1917, 10, 27); 
@@ -307,7 +305,13 @@
             { id: 3, name: "Ingman I", start: "1918-11-27", end: "1919-04-17", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Ensimmäinen varsinainen valtioneuvosto hallintomuodon vahvistamisen jälkeen." },
             { id: 4, name: "K. Castrén", start: "1919-04-17", end: "1919-08-15", pmParty: "Kansallinen Edistyspuolue", type: "Vähemmistöhallitus", details: "Lyhytikäinen vähemmistöhallitus siirtymäkaudella." },
             { id: 5, name: "Vennola I", start: "1919-08-15", end: "1920-03-15", pmParty: "Kansallinen Edistyspuolue", type: "Vähemmistöhallitus", details: "Keskustapohjainen vähemmistöhallitus." },
-            { id: 6, name: "Erich", start: "1920-03-15", end: "1921-04-09", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Solmi Tarton rauhan Neuvosto-Venäjän kanssa vuonna 1920." }
+            { id: 6, name: "Erich", start: "1920-03-15", end: "1921-04-09", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Solmi Tarton rauhan Neuvosto-Venäjän kanssa vuonna 1920." },
+            { id: 7, name: "Vennola II", start: "1921-04-09", end: "1922-06-02", pmParty: "Edistyspuolue", type: "Vähemmistöhallitus", details: "Keskustalainen vähemmistöhallitus." },
+            { id: 8, name: "Cajander I", start: "1922-06-02", end: "1922-11-14", pmParty: "Ammatti/virkamies", type: "Virkamieshallitus", details: "Ensimmäinen virkamieshallitus." },
+            { id: 9, name: "Kallio I", start: "1922-11-14", end: "1924-01-18", pmParty: "Maalaisliitto", type: "Vähemmistöhallitus", details: "Kyösti Kallion ensimmäinen hallitus." },
+            { id: 10, name: "Cajander II", start: "1924-01-18", end: "1924-05-31", pmParty: "Ammatti/virkamies", type: "Virkamieshallitus", details: "Virkamieshallitus, joka toimi eduskuntavaalien yli." },
+            { id: 11, name: "Ingman II", start: "1924-05-31", end: "1925-03-31", pmParty: "Kansallinen Kokoomus", type: "Enemmistöhallitus", details: "Porvarillinen enemmistöhallitus." },
+            { id: 12, name: "Tulenheimo", start: "1925-03-31", end: "1925-12-31", pmParty: "Kansallinen Kokoomus", type: "Vähemmistöhallitus", details: "Kokoomuksen ja Maalaisliiton muodostama hallitus." }
         ];
 
         function parseDate(dateStr) { const parts = dateStr.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]); }
@@ -366,6 +370,25 @@
         ruler.style.height = `${currentYPosition}px`;
         ruler.appendChild(rulerFragment);
 
+        // Tracker for currently clicked cabinet
+        let currentActiveBlock = null;
+
+        function selectCabinet(gov, block, topPosition, blockHeight) {
+            // Remove active class from previous selection
+            if (currentActiveBlock) {
+                currentActiveBlock.classList.remove('active');
+            }
+            
+            // Add active class to new selection
+            block.classList.add('active');
+            
+            // Update infobox and timeline glow
+            updateInfoBox(gov);
+            updateHighlight(topPosition, Math.max(blockHeight, 8));
+            
+            currentActiveBlock = block;
+        }
+
         // Setup Cabinets and Term Start Labels
         const cabinetsArea = document.getElementById('cabinets-area');
         const cabinetsFragment = document.createDocumentFragment();
@@ -385,7 +408,10 @@
             block.style.height = `${Math.max(blockHeight, 8)}px`;
             block.innerHTML = `<h3>${gov.id}. ${gov.name}</h3><p>${gov.start}</p>`;
 
+            // CLICK EVENT LOGIC
             block.addEventListener('click', () => {
+                selectCabinet(gov, block, topPosition, blockHeight);
+                
                 const layoutContainerTop = document.getElementById('layout-container').offsetTop; 
                 window.scrollTo({
                     top: topPosition + layoutContainerTop - selectionOffset,
@@ -440,54 +466,14 @@
             });
         });
 
-        // Scroll Scanner Engine
-        let currentActiveBlock = null;
-
-        function checkScrollSelection() {
-            const layoutContainerTop = document.getElementById('layout-container').offsetTop;
-            const timelineY = window.scrollY + selectionOffset - layoutContainerTop;
-
-            let foundGov = null;
-            let foundBlock = null;
-
-            for (let i = 0; i < governments.length; i++) {
-                const block = cabinetElements[i];
-                const top = parseInt(block.style.top);
-                const height = parseInt(block.style.height);
-
-                if (timelineY >= top && timelineY <= top + height) {
-                    foundGov = governments[i];
-                    foundBlock = block;
-                    break;
-                }
-            }
-
-            if (!foundGov) {
-                if (timelineY < parseInt(cabinetElements[0].style.top)) {
-                    foundGov = governments[0];
-                    foundBlock = cabinetElements[0];
-                } else {
-                    foundGov = governments[governments.length - 1];
-                    foundBlock = cabinetElements[cabinetElements.length - 1];
-                }
-            }
-
-            if (currentActiveBlock !== foundBlock) {
-                if (currentActiveBlock) currentActiveBlock.classList.remove('active');
-                
-                foundBlock.classList.add('active');
-                updateInfoBox(foundGov);
-                
-                const topPosition = parseInt(foundBlock.style.top);
-                const blockHeight = parseInt(foundBlock.style.height);
-                updateHighlight(topPosition, Math.max(blockHeight, 8));
-                
-                currentActiveBlock = foundBlock;
-            }
+        // Auto-select the first cabinet on load
+        if (governments.length > 0 && cabinetElements.length > 0) {
+            const firstBlock = cabinetElements[0];
+            const firstTopPosition = parseInt(firstBlock.style.top);
+            const firstBlockHeight = parseInt(firstBlock.style.height);
+            selectCabinet(governments[0], firstBlock, firstTopPosition, firstBlockHeight);
         }
 
-        window.addEventListener('scroll', checkScrollSelection);
-        checkScrollSelection(); 
     </script>
 </body>
 </html>
