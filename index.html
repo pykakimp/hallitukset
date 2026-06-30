@@ -115,7 +115,7 @@
             width: 90%; 
             max-width: 1500px;
             margin-top: 30px; 
-            margin-bottom: 40vh; /* Reduced the massive empty space */
+            margin-bottom: 40vh; 
             margin-left: 5vw; 
             position: relative;
         }
@@ -335,7 +335,6 @@
 
         function updateInfoBox(gov, durationInDays) {
             const infobox = document.getElementById('infobox');
-            // Removed the order number (${gov.id}.) from the <h2> heading
             infobox.innerHTML = `
                 <h2>${gov.name}</h2>
                 <span class="infobox-label">Kesto</span>
@@ -463,10 +462,11 @@
                     block.style.top = `${topPosition}px`;
                     block.style.height = `${Math.max(blockHeight, 8)}px`;
                     
+                    // TÄMÄ ON SE MUUTOS: Lisättiin "– ${gov.displayEnd}" <p>-tägiin
                     block.innerHTML = `
                         <div class="cabinet-order">${gov.id}. Hallitus</div>
                         <h3>${gov.name}</h3>
-                        <p>${gov.displayStart}</p>
+                        <p>${gov.displayStart} – ${gov.displayEnd}</p>
                     `;
 
                     block.addEventListener('click', () => {
