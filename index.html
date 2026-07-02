@@ -16,6 +16,69 @@
             justify-content: flex-start; 
         }
 
+        /* --- Landing Page --- */
+        #landing-page {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background-color: #000000;
+            z-index: 2000; /* Covers the fixed header initially */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .landing-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #00529b, #003a70);
+            border-radius: 12px;
+            border: 2px solid #00529b;
+            margin-bottom: 50px;
+        }
+
+        .landing-poem {
+            font-size: 1.8rem;
+            line-height: 1.8;
+            color: #cccccc;
+            font-style: italic;
+            margin-bottom: 80px;
+            max-width: 800px;
+        }
+
+        .landing-arrow-container {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            color: #888888;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .landing-arrow-container:hover {
+            color: #ffffff;
+            transform: translateY(8px);
+        }
+
+        .landing-arrow {
+            width: 24px;
+            height: 24px;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg);
+        }
+
+        .landing-arrow-container span {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
         /* --- Header & Logo --- */
         #site-header {
             position: fixed;
@@ -54,7 +117,7 @@
         
         /* --- Search Container --- */
         #search-container {
-            margin-top: 90px; 
+            margin-top: 150px; /* Increased to ensure smooth scroll math aligns perfectly past the landing page */
             margin-left: 5vw;
             display: flex;
             align-items: center;
@@ -286,9 +349,82 @@
             align-items: center;
         }
 
+        /* --- Styling for the Mobile Message --- */
+        #mobile-message {
+            display: none; 
+            color: #ffffff;
+            text-align: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        #mobile-message h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            color: #888888; 
+        }
+
+        #mobile-message p {
+            font-size: 1.5rem;
+            line-height: 1.6;
+        }
+
+        #mobile-message .signature {
+            margin-top: 40px;
+            font-style: italic;
+            color: #888888;
+            font-size: 1.2rem;
+        }
+
+        /* --- The Mobile Switch (Screens smaller than 768px) --- */
+        @media (max-width: 768px) {
+            #layout-container, 
+            header, 
+            footer, 
+            #search-container, 
+            #selection-line,
+            #landing-page {
+                display: none !important;
+            }
+
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh; 
+                margin: 0;
+                overflow: hidden; 
+                background-color: #000000;
+            }
+
+            #mobile-message {
+                display: block;
+            }
+        }
+
     </style>
 </head>
 <body>
+
+    <div id="landing-page">
+        <div class="landing-logo"></div>
+        <div class="landing-poem">
+                    Ei ruostu kruunu Suomen<br>
+                    Kun vankaksi kerran tehtiin.<br>
+                    Tuo kruunu maamme nuoren,<br>
+                    joka vasta on puhjennut lehtiin.<br><br> 
+
+                    Ei kiillä kruunu korun lailla,<br>
+                    Se on vankka ja vakava päähine.<br>
+                    Se on kultaa ja hopeaa tyystin vailla,<br>
+                    Ja timantin paikalla jääkide.<br>
+        </div>
+        <div class="landing-arrow-container" onclick="scrollToTimeline()">
+            <div class="landing-arrow"></div>
+            <span>Suomen valtioneuvostojen aikajanaan</span>
+        </div>
+    </div>
 
     <header id="site-header">
         <div class="logo-placeholder" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
@@ -296,6 +432,12 @@
             <span>Hallitukset</span>
         </div>
     </header>
+
+    <div id="mobile-message">
+        <h2>Huomio!</h2>
+        <p>Sivuston mobiiliversio on yhä työn alla.<br>Pahoittelut!</p>
+        <p class="signature">- PK</p>
+    </div>
 
     <div id="search-container">
         <label for="date-search">Hae ajanhetkeä:</label>
@@ -316,13 +458,21 @@
     </div>
     
     <footer id="site-footer">
-        </footer>
+    </footer>
 
     <script>
         const startDate = new Date(1917, 10, 27); 
         const endDate = new Date(2026, 0, 1);     
         const pixelsPerDay = 1.33; 
         const selectionOffset = 200; 
+
+        // Landing Page Scroll Function
+        function scrollToTimeline() {
+            window.scrollTo({
+                top: window.innerHeight,
+                behavior: 'smooth'
+            });
+        }
 
         function parseDate(dateStr) { const parts = dateStr.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]); }
         function getDaysBetween(d1, d2) { const msPerDay = 1000 * 60 * 60 * 24; return Math.round((d2 - d1) / msPerDay); }
@@ -353,22 +503,17 @@
             .then(response => response.json())
             .then(data => {
                 
-                // 1. Sort the data chronologically first so roman numeral counting goes strictly forwards
                 const sortedData = data.sort((a, b) => a.cabinet_id - b.cabinet_id);
 
-                // 2. Count total cabinets per leader
                 const leaderTotals = {};
                 sortedData.forEach(item => {
                     leaderTotals[item.leader] = (leaderTotals[item.leader] || 0) + 1;
                 });
 
-                // Helper to convert numbers to Roman Numerals (max needed is IV for Kekkonen/Kallio)
                 const toRoman = (num) => ["", "I", "II", "III", "IV", "V", "VI"][num] || num;
 
-                // Tracker for current occurrence of each leader
                 const currentLeaderCount = {};
 
-                // 3. Map the JSON data into our layout format
                 const governments = sortedData.map(item => {
                     let [startStr, endStr] = item.time_in_office.split('-').map(s => s.trim());
                     
@@ -383,7 +528,6 @@
                     
                     const formatYMD = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-                    // Auto-generate Roman Numerals logic
                     currentLeaderCount[item.leader] = (currentLeaderCount[item.leader] || 0) + 1;
                     let displayName = item.leader;
                     
@@ -404,7 +548,6 @@
                     };
                 }); 
 
-                // Setup Timeline Ruler
                 const ruler = document.getElementById('timeline-ruler');
                 const rulerFragment = document.createDocumentFragment();
                 let currentDate = new Date(startDate);
@@ -444,7 +587,6 @@
                     currentActiveBlock = block;
                 }
 
-                // Setup Cabinets and Term Start Labels
                 const cabinetsArea = document.getElementById('cabinets-area');
                 const cabinetsFragment = document.createDocumentFragment();
                 const cabinetElements = []; 
@@ -462,7 +604,6 @@
                     block.style.top = `${topPosition}px`;
                     block.style.height = `${Math.max(blockHeight, 8)}px`;
                     
-                    // TÄMÄ ON SE MUUTOS: Lisättiin "– ${gov.displayEnd}" <p>-tägiin
                     block.innerHTML = `
                         <div class="cabinet-order">${gov.id}. Hallitus</div>
                         <h3>${gov.name}</h3>
@@ -499,7 +640,6 @@
                 cabinetsArea.style.height = `${currentYPosition}px`;
                 cabinetsArea.appendChild(cabinetsFragment);
 
-                // Search Engine Logic
                 document.getElementById('search-btn').addEventListener('click', () => {
                     const dateInput = document.getElementById('date-search').value;
                     if (!dateInput) return;
@@ -525,7 +665,7 @@
                     });
                 });
 
-                // Auto-select the first cabinet on load
+                // Auto-select the first cabinet on load (without forcing scroll)
                 if (governments.length > 0 && cabinetElements.length > 0) {
                     const firstBlock = cabinetElements[0];
                     const firstTopPosition = parseInt(firstBlock.style.top);
